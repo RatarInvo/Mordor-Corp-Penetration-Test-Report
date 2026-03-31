@@ -114,8 +114,12 @@ The `/search` endpoint exhibits SQL injection behavior:
 ## Attack Surface Summary
 The following areas warrant further testing:
 - SQL injection exploitation (confirmed vulnerability)
-- Authentication mechanisms at `/profile`
-- Session management logic
 - SSH service (if credentials are obtained)
+- Weak authentication or credential reuse on the login page
+- Exposed uploads directory and leaked internal files
+- Hidden admin panels or virtual hosts
+- Weak session handling around /profile and /logout
+- Known vulnerabilities affecting Apache 2.4.54 or OpenSSH 8.4p1
+- Forgotten legacy functionality or old database tables
 
 These findings position authentication and user profile functionality as critical attack surfaces for subsequent testing phases.
