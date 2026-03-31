@@ -2,6 +2,7 @@
 #### - FLAG{So_It_Begins.}
 #### - Flag{Keep_It_Secret_Keep_It_Safe}
 #### - FLAG{All_That_Is_Gold_Does_Not_Glitter}
+#### - FLAG{Mithril_Master}
 
 # Passive Reconnaissance: Mordor Corp
 
@@ -97,29 +98,65 @@ The `/search` endpoint exhibits SQL injection behavior:
 
 ---
 
+### Database Enumeration
+Using `sqlmap`, the injection point was exploited to enumerate the database:
+
+- **Backend DBMS:** MySQL >= 5.0.12
+- **Databases:** `information_schema`, `mordordb`
+- **Tables in `mordordb`:** `users`, `moria`
+
+#### `users` table contents:
+| id | username | email | role | password (hash) |
+|----|----------|-------|------|-----------------|
+| 1 | saruman | saruman@mordor-corp.fi | user | `6ca3e14cf5ffd2108aa869f4c16394ad` (MD5) |
+| 2 | sauron | sauron@mordor-corp.fi | admin | `$2y$14$SWEbY90.fjIbMTvrPHz4teoesnRaWyrO9LPB8NQijFIy4rckSmHnm` (bcrypt) |
+
+---
+
 ## Additional Endpoints Discovered
 
 | Endpoint | Description |
 |----------|-------------|
-| `/profile` | Contains a login form (username + password fields); authentication-protected |
-| `/logout` | Redirects to `/profile` instead of a homepage or dedicated login page |
+| `/profile` | Contains a login form (username + password fields); authentication-protected. Also vulnerable to time‑based blind SQL injection. |
+| `/logout` | Redirects to `/profile` instead of a homepage or dedicated login page. |
+| `/upload` | File upload interface – requires admin access. |
+| `/uploads` | Directory listing (exposed) containing `chat.log` and `.ssh/sauron_rsa`. |
+| `/assets` | Static assets directory – contains images, CSS, JS, and a flag (see below). |
+| `/server-status` | Apache status page (leaks internal IPs, software versions, and active requests). |
 
-### Security Observations
-- The `/logout` redirect behavior is atypical and may indicate weaknesses in:
-  - Session handling
-  - Access control logic
+### Exposed SSH Private Key
+A private SSH key was discovered at `/uploads/.ssh/sauron_rsa`:
+-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn...
+-----END OPENSSH PRIVATE KEY-----
+
+This key belongs to user `sauron` and is publicly accessible – a critical misconfiguration that provides direct system access.
+
+### Apache Server-Status Leak
+The `/server-status` endpoint (accessible without authentication) revealed:
+- **Software:** Apache/2.4.54, PHP/7.4.33
+- **Internal IP addresses:** `172.19.0.2`, `172.19.0.1`
+- **Suspicious request paths:** `/zorum`, `/zh-tw`, `/zh-cn`, `/zoom`, `/zone`, `/zope`, `/zh_TW`, `/zones` – these may indicate hidden admin panels or test pages.
+
+### Assets Directory Analysis
+The `/assets/` directory was recursively downloaded and examined:
+- `script.js` – minimal JavaScript (no secrets)
+- `style.css` – standard styles (no secrets)
+- `Mordor.png` – image containing no hidden metadata or steganographic content
+- No additional sensitive files were found.
 
 ---
 
 ## Attack Surface Summary
 The following areas warrant further testing:
-- SQL injection exploitation (confirmed vulnerability)
-- SSH service (if credentials are obtained)
-- Weak authentication or credential reuse on the login page
-- Exposed uploads directory and leaked internal files
-- Hidden admin panels or virtual hosts
-- Weak session handling around /profile and /logout
+- SQL injection exploitation (confirmed vulnerability on both `/search` and `/profile`)
+- SSH service – private key exposure enables direct access as `sauron`
+- Weak authentication or credential reuse on the login page (admin hash may be crackable)
+- File upload functionality at `/upload` (once admin access is obtained)
+- Exposed uploads directory and leaked internal files (including SSH key)
+- Hidden admin panels or virtual hosts (based on server-status requests)
+- Weak session handling around `/profile` and `/logout`
 - Known vulnerabilities affecting Apache 2.4.54 or OpenSSH 8.4p1
-- Forgotten legacy functionality or old database tables
+- Forgotten legacy functionality or old database tables (e.g., `moria`)
 
-These findings position authentication and user profile functionality as critical attack surfaces for subsequent testing phases.
+These findings position authentication, SSH access, and the file upload functionality as critical attack surfaces for subsequent testing phases.
