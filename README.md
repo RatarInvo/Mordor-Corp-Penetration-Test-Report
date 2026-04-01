@@ -126,6 +126,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 
 ### Exposed SSH Private Key
 A private SSH key was discovered at `/uploads/.ssh/sauron_rsa`:
+
 -----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn...
 -----END OPENSSH PRIVATE KEY-----
@@ -160,3 +161,41 @@ The following areas warrant further testing:
 - Forgotten legacy functionality or old database tables (e.g., `moria`)
 
 These findings position authentication, SSH access, and the file upload functionality as critical attack surfaces for subsequent testing phases.
+
+# Initial Access
+
+## Attempt 1: SSH with Exposed Private Key
+**Vulnerability tested:** Exposed SSH private key (misconfiguration)  
+**Method:** Direct SSH login using the discovered key  
+**Command:** `ssh -i sauron_rsa sauron@mordor-corp.fi`  
+**Outcome:** ✅ **Success** – The key was not passphrase-protected and provided immediate access to the system as user `sauron`.
+
+After connecting, the user flag was found in `~/user.txt`:
+
+
+## Attempt 2: Cracking Saruman's MD5 Hash
+**Vulnerability tested:** Weak password hash (MD5)  
+**Method:** Dictionary attack with rockyou.txt using hashcat  
+**Command:** `hashcat -m 0 -a 0 saruman_hash.txt /usr/share/wordlists/rockyou.txt`  
+**Outcome:** ❌ **Failed** – The hash was not present in the rockyou wordlist. No further attempts were made as SSH access was already obtained.
+
+## Attempt 3: SQL Injection Bypass on `/profile/`
+**Vulnerability tested:** Time‑based blind SQL injection on login form  
+**Method:** Attempted simple bypass payload  
+**Payload:** `username=admin' OR '1'='1' -- &password=anything`  
+**Outcome:** ❌ **Failed** – The form did not authenticate with this payload. Since SSH access was already achieved, no deeper exploitation was pursued.
+
+## Summary of Initial Access
+- **Successful vector:** SSH private key exposure.
+- **Credentials obtained:** None needed – key‑based authentication.
+- **Privilege level:** `sauron` (admin role in web context, but standard user in the OS).
+
+# Privilege Escalation
+
+## Initial System Enumeration (as `sauron`)
+- **OS:** Debian 11 (bullseye)
+- **Kernel:** 5.10.0
+- **Sudo rights:** `sauron` may have `sudo` privileges or other escalation vectors.
+- **Running processes:** Web server (Apache), MySQL, SSH.
+
+
