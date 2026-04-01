@@ -123,6 +123,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 | `/uploads` | Directory listing (exposed) containing `chat.log` and `.ssh/sauron_rsa`. |
 | `/assets` | Static assets directory – contains images, CSS, JS, and a flag (see below). |
 | `/server-status` | Apache status page (leaks internal IPs, software versions, and active requests). |
+| `/palantir` | requires admin access. |
 
 ### Exposed SSH Private Key
 A private SSH key was discovered at `/uploads/.ssh/sauron_rsa`:
