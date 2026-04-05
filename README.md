@@ -153,6 +153,7 @@ A private SSH key was discovered at `/uploads/.ssh/sauron_rsa` — publicly acce
 
 <img width="512" height="225" alt="6c" src="https://github.com/user-attachments/assets/9615789b-02f5-40b4-8f5a-0a02f6ce5ef2" />
 
+
 ```
 -----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn...
@@ -185,6 +186,7 @@ atob("RmxhZ3tLZWVwX0l0X1NlY3JldF9LZWVwX0l0X1NhZmV9")
 - `Mordor.png` – contained a steganographically hidden flag discovered using an online steganography analysis tool:
 
 <img width="1179" height="918" alt="9" src="https://github.com/user-attachments/assets/321a812a-a61f-42fa-b35c-2cadd1beb6e9" />
+
 
 ```
 Flag{I_See_You}
@@ -293,8 +295,10 @@ sudo less /etc/passwd
 ### Root Flag
 
 <img width="364" height="55" alt="18" src="https://github.com/user-attachments/assets/d07f1f1c-869a-4d32-99df-54f724d35399" />
+
 ```
 FLAG{It_Is_Done.}
+
 ```
 Located at: `/root/root.txt`
 
