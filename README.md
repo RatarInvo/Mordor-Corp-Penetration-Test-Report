@@ -46,14 +46,14 @@ Information provided by CEO Sauron revealed:
 
 The response headers reveal the Apache version and confirm the absence of all major security headers:
 
-<img width="346" height="500" alt="1" src="https://github.com/user-attachments/assets/f493b92d-74cf-4107-a9c4-940f1405d580" />
+<img width="346" height="500" alt="1" src="https://github.com/user-attachments/assets/b2de5b55-85f4-4229-8dbe-027c14da6304" />
 
 ### Exposed Resources
 A publicly accessible internal chat log was discovered at `/uploads/chat.log` containing:
 - Administrator-user conversation discussing hidden development artifacts
 - Suggestion to examine asset files thoroughly
 
-<img width="713" height="386" alt="2" src="https://github.com/user-attachments/assets/627b7740-30d6-4e15-965e-fb35d5f03b89" />
+<img width="713" height="386" alt="2" src="https://github.com/user-attachments/assets/58866f14-9ac8-4d92-83cb-16a954665d39" />
 
 ### Enumeration Opportunities
 The chat log reference suggests potential sensitive information may reside in:
@@ -71,7 +71,7 @@ This increases the likelihood of discovering hidden endpoints, credentials, or d
 ## Open Ports & Services
 An Nmap scan revealed two open TCP services:
 
-<img width="670" height="266" alt="3" src="https://github.com/user-attachments/assets/2e7df112-be7b-45e4-b98b-3da2bfb06c43" />
+<img width="670" height="266" alt="3" src="https://github.com/user-attachments/assets/6e35657e-71a3-4e88-809c-24349fed9420" />
 
 | Port | Service | Version |
 |------|---------|---------|
@@ -89,6 +89,31 @@ The host runs a Linux-based OS. Nmap OS fingerprinting suggests Linux kernel ver
 No additional common services (MySQL, FTP, SMB, HTTPS) are exposed externally, suggesting entry points are limited to:
 - SSH access
 - The web application
+
+---
+
+## Known CVEs
+
+Based on the identified software versions, the following known vulnerabilities were researched:
+
+| Software | Version | CVE | Description |
+|----------|---------|-----|-------------|
+| Apache HTTP Server | 2.4.54 | CVE-2022-37436 | HTTP response splitting via malformed headers |
+| Apache HTTP Server | 2.4.54 | CVE-2022-36760 | HTTP request smuggling via mod_proxy |
+| OpenSSH | 8.4p1 | CVE-2023-38408 | Remote code execution via ssh-agent forwarding |
+| PHP | 7.4.33 | CVE-2022-31628 | Phar deserialization vulnerability |
+| PHP | 7.4.33 | CVE-2022-31629 | HTTP header injection vulnerability |
+
+> **Note:** While these CVEs were identified, exploitation was not necessary as more direct attack vectors (SQL injection, exposed SSH key) were available and successfully exploited.
+
+---
+
+## Subdomain Enumeration
+A subdomain enumeration attempt was performed to identify any additional attack surfaces:
+
+**Command:** `dirb http://mordor-corp.fi -r`
+
+No subdomains or virtual hosts were discovered. The attack surface is limited to the single domain `mordor-corp.fi` running on the identified IP.
 
 ---
 
@@ -119,7 +144,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 - **Databases:** `information_schema`, `mordordb`
 - **Tables in `mordordb`:** `users`, `moria`
 
-<img width="759" height="250" alt="4" src="https://github.com/user-attachments/assets/2cc4c559-ceb0-416c-af04-0b0f1c6829a3" />
+<img width="759" height="250" alt="4" src="https://github.com/user-attachments/assets/2c1887aa-d483-4513-89d0-1a0b3cc71564" />
 
 #### `users` table contents:
 | id | username | email | role | password (hash) |
@@ -136,7 +161,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 
 ## Additional Endpoints Discovered
 
-<img width="419" height="172" alt="5" src="https://github.com/user-attachments/assets/9f63fa41-8567-4475-8bf8-c4820f52582d" />
+<img width="419" height="172" alt="5" src="https://github.com/user-attachments/assets/265430ea-1ef7-425c-b1c3-adc5e40c7e2f" />
 
 | Endpoint | Description |
 |----------|-------------|
@@ -151,8 +176,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 ### Exposed SSH Private Key
 A private SSH key was discovered at `/uploads/.ssh/sauron_rsa` — publicly accessible via direct URL, which is a critical misconfiguration that provides direct system access:
 
-<img width="512" height="225" alt="6c" src="https://github.com/user-attachments/assets/9615789b-02f5-40b4-8f5a-0a02f6ce5ef2" />
-
+<img width="512" height="225" alt="6c" src="https://github.com/user-attachments/assets/e3e81c42-dbcd-46dc-b046-ea933fbee49f" />
 
 ```
 -----BEGIN OPENSSH PRIVATE KEY-----
@@ -166,27 +190,26 @@ The `/server-status` endpoint (accessible without authentication) revealed:
 - **Internal IP addresses:** `172.19.0.2`, `172.19.0.1`
 - **Suspicious request paths:** `/zorum`, `/zh-tw`, `/zh-cn`, `/zoom`, `/zone`, `/zope`, `/zh_TW`, `/zones`
 
-<img width="865" height="1039" alt="7" src="https://github.com/user-attachments/assets/a4336b69-e8a5-43f3-ab9c-b6265ad42f29" />
+<img width="865" height="1039" alt="7" src="https://github.com/user-attachments/assets/f9d9415f-89de-4d22-b7ae-dd70b5a5045b" />
 
 ### Assets Directory Analysis
 The `/assets/` directory was recursively downloaded and examined:
 
 - `script.js` – contained a base64-encoded flag discovered by running `atob()` in the browser console:
 
-<img width="416" height="124" alt="8a" src="https://github.com/user-attachments/assets/2d389c1b-6525-45b5-ada7-18f74e2698ea" />
+<img width="416" height="124" alt="8a" src="https://github.com/user-attachments/assets/41aa7a9c-c109-4858-ac75-31e3b5cdb259" />
 
 ```javascript
 atob("RmxhZ3tLZWVwX0l0X1NlY3JldF9LZWVwX0l0X1NhZmV9")
 // Output: Flag{Keep_It_Secret_Keep_It_Safe}
 ```
 
-<img width="414" height="127" alt="8b" src="https://github.com/user-attachments/assets/3af3759f-3b34-4897-9373-e6b948d1a16c" />
+<img width="414" height="127" alt="8b" src="https://github.com/user-attachments/assets/05975443-107f-4d0b-8ada-6ac3c0435b63" />
 
 - `style.css` – standard styles (no secrets)
 - `Mordor.png` – contained a steganographically hidden flag discovered using an online steganography analysis tool:
 
-<img width="1179" height="918" alt="9" src="https://github.com/user-attachments/assets/321a812a-a61f-42fa-b35c-2cadd1beb6e9" />
-
+<img width="1179" height="918" alt="9" src="https://github.com/user-attachments/assets/ba1e8e34-9e8d-4817-acaa-52f8bf045257" />
 
 ```
 Flag{I_See_You}
@@ -203,7 +226,7 @@ The following areas warrant further testing:
 - Exposed uploads directory and leaked internal files (including SSH key)
 - Hidden admin panels or virtual hosts (based on server-status requests)
 - Weak session handling around `/profile` and `/logout`
-- Known vulnerabilities affecting Apache 2.4.54 or OpenSSH 8.4p1
+- Known vulnerabilities affecting Apache 2.4.54, OpenSSH 8.4p1, and PHP 7.4.33
 - Forgotten legacy functionality or old database tables (e.g., `moria`)
 - Steganographic content hidden in image assets
 
@@ -219,7 +242,7 @@ These findings position authentication, SSH access, and the file upload function
 **Command:** `ssh -i sauron_rsa sauron@mordor-corp.fi`  
 **Outcome:** ✅ **Success** – The key was not passphrase-protected and provided immediate access to the system as user `sauron`.
 
-<img width="793" height="280" alt="11" src="https://github.com/user-attachments/assets/8db1de2a-6d42-4082-b34c-8cdb67fa228f" />
+<img width="793" height="280" alt="11" src="https://github.com/user-attachments/assets/eead866d-4992-4b88-aa20-0b6c74a47cd5" />
 
 ## Attempt 2: Cracking Saruman's MD5 Hash
 **Vulnerability tested:** Weak password hash (MD5)  
@@ -231,7 +254,7 @@ These findings position authentication, SSH access, and the file upload function
 **Command:** `hashcat -m 0 -a 3 saruman_hash.txt gandalf?d?d?d7 --force`  
 **Outcome:** ❌ **Failed** – Process was killed due to insufficient resources in the Docker container. The mask pattern `gandalf?d?d?d7` was correct based on the teacher's hint, but hardware limitations prevented completion. SSH access was already achieved via the exposed private key, so no further cracking attempts were made.
 
-<img width="733" height="215" alt="10" src="https://github.com/user-attachments/assets/2a369dbc-75c5-4975-a3e1-a027dcbdbc9e" />
+<img width="733" height="215" alt="10" src="https://github.com/user-attachments/assets/e07de792-503c-46ec-bf83-20dc0c98b217" />
 
 ## Attempt 3: SQL Injection Bypass on `/profile/`
 **Vulnerability tested:** Time-based blind SQL injection on login form  
@@ -258,7 +281,7 @@ After gaining SSH access as `sauron`, sudo privileges were checked:
 
 **Command:** `sudo -l`
 
-<img width="757" height="132" alt="12" src="https://github.com/user-attachments/assets/ff18403c-f9af-4fb5-862b-63c5c4fae78c" />
+<img width="757" height="132" alt="12" src="https://github.com/user-attachments/assets/a3328ae8-023f-47ad-8e8d-9a934c4b421d" />
 
 **Output:**
 ```
@@ -294,7 +317,7 @@ sudo less /etc/passwd
 
 ### Root Flag
 
-<img width="364" height="55" alt="18" src="https://github.com/user-attachments/assets/d07f1f1c-869a-4d32-99df-54f724d35399" />
+<img width="364" height="55" alt="18" src="https://github.com/user-attachments/assets/5b277dc6-e005-4b42-ae15-486642ca68d7" />
 
 ```
 FLAG{It_Is_Done.}
@@ -312,7 +335,7 @@ After achieving root access, a full filesystem search was performed to locate an
 grep -r "FLAG{" / 2>/dev/null
 ```
 
-<img width="726" height="130" alt="14" src="https://github.com/user-attachments/assets/ca7bdbfc-6152-4216-a38a-232ff47ac7d4" />
+<img width="726" height="130" alt="14" src="https://github.com/user-attachments/assets/5cf9a93d-d7b6-4d60-941f-d68a08bf7e9c" />
 
 **Output:**
 ```
@@ -331,7 +354,7 @@ grep -r "FLAG{" / 2>/dev/null
 **Flag:** `FLAG{All_That_Is_Gold_Does_Not_Glitter}`  
 **Note:** Hidden in the HTML source using inline CSS `display: none` — invisible to regular visitors but present in the page source.
 
-<img width="426" height="403" alt="15" src="https://github.com/user-attachments/assets/5ecb1231-77d8-467e-a162-b1e4a34442f5" />
+<img width="426" height="403" alt="15" src="https://github.com/user-attachments/assets/2a3e32b6-c2d8-4302-b0b5-74db35d4f074" />
 
 ---
 
@@ -348,7 +371,7 @@ User input is passed directly to `shell_exec()` without any sanitization or vali
 
 **Authentication bypass:** The endpoint only checks for a `role=admin` cookie value with no server-side session validation, making it trivially bypassable via browser DevTools.
 
-<img width="1800" height="375" alt="16" src="https://github.com/user-attachments/assets/fe7ebbbb-e194-45a4-8e85-02273dd06126" />
+<img width="1800" height="375" alt="16" src="https://github.com/user-attachments/assets/58eda622-5aeb-46d3-990d-41e19242a19c" />
 
 ### Command Injection — Confirmed
 **Method:** Appending shell commands after a valid IP using `;`
@@ -359,7 +382,7 @@ User input is passed directly to `shell_exec()` without any sanitization or vali
 | `127.0.0.1; grep -r "FLAG{" /var/www/html/` | Revealed hidden flag in `index.html` |
 | `127.0.0.1; cat /var/www/html/db.php` | Leaked database credentials |
 
-<img width="584" height="489" alt="17" src="https://github.com/user-attachments/assets/c0f8d38e-7bd2-4690-8505-768b99c7c0f3" />
+<img width="584" height="489" alt="17" src="https://github.com/user-attachments/assets/76c4b90d-1ec1-480c-9627-dfda036ff81e" />
 
 **Leaked credentials from `db.php`:**
 ```php
@@ -388,6 +411,8 @@ $DB_PASS = "speak-friend-and-enter";
 ---
 
 # Remediation
+
+> ⚠️ All fixes were applied while keeping the platform fully operational. No services were shut down during the remediation process. The web application, SSH service, and database continued to function normally throughout.
 
 ## 1. SQL Injection — Critical
 
@@ -575,3 +600,22 @@ binwalk Mordor.png
 | 7 | Exposed sensitive endpoints | 🟠 High | Apache configuration updated |
 | 8 | Missing HTTP security headers | 🟡 Medium | Headers added |
 | 9 | Steganographic content in assets | 🟡 Medium | Asset audit + steganography scanning |
+
+---
+
+# References
+
+| Resource | URL |
+|----------|-----|
+| GTFOBins — less | https://gtfobins.github.io/gtfobins/less/ |
+| sqlmap documentation | https://sqlmap.org/ |
+| CVE-2022-37436 — Apache HTTP Server | https://nvd.nist.gov/vuln/detail/CVE-2022-37436 |
+| CVE-2022-36760 — Apache HTTP Server | https://nvd.nist.gov/vuln/detail/CVE-2022-36760 |
+| CVE-2023-38408 — OpenSSH | https://nvd.nist.gov/vuln/detail/CVE-2023-38408 |
+| CVE-2022-31628 — PHP | https://nvd.nist.gov/vuln/detail/CVE-2022-31628 |
+| CVE-2022-31629 — PHP | https://nvd.nist.gov/vuln/detail/CVE-2022-31629 |
+| OWASP SQL Injection | https://owasp.org/www-community/attacks/SQL_Injection |
+| OWASP Command Injection | https://owasp.org/www-community/attacks/Command_Injection |
+| PHP password_hash documentation | https://www.php.net/manual/en/function.password-hash.php |
+| Apache security headers guide | https://httpd.apache.org/docs/2.4/mod/mod_headers.html |
+| Hashcat mask attack | https://hashcat.net/wiki/doku.php?id=mask_attack |
