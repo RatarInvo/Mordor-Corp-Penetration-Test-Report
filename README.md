@@ -152,6 +152,7 @@ Using `sqlmap`, the injection point was exploited to enumerate the database:
 A private SSH key was discovered at `/uploads/.ssh/sauron_rsa` — publicly accessible via direct URL, which is a critical misconfiguration that provides direct system access:
 
 <img width="512" height="225" alt="6c" src="https://github.com/user-attachments/assets/9615789b-02f5-40b4-8f5a-0a02f6ce5ef2" />
+
 ```
 -----BEGIN OPENSSH PRIVATE KEY-----
 b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAACFwAAAAdzc2gtcn...
@@ -172,16 +173,19 @@ The `/assets/` directory was recursively downloaded and examined:
 - `script.js` – contained a base64-encoded flag discovered by running `atob()` in the browser console:
 
 <img width="416" height="124" alt="8a" src="https://github.com/user-attachments/assets/2d389c1b-6525-45b5-ada7-18f74e2698ea" />
+
 ```javascript
 atob("RmxhZ3tLZWVwX0l0X1NlY3JldF9LZWVwX0l0X1NhZmV9")
 // Output: Flag{Keep_It_Secret_Keep_It_Safe}
 ```
+
 <img width="414" height="127" alt="8b" src="https://github.com/user-attachments/assets/3af3759f-3b34-4897-9373-e6b948d1a16c" />
 
 - `style.css` – standard styles (no secrets)
 - `Mordor.png` – contained a steganographically hidden flag discovered using an online steganography analysis tool:
 
 <img width="1179" height="918" alt="9" src="https://github.com/user-attachments/assets/321a812a-a61f-42fa-b35c-2cadd1beb6e9" />
+
 ```
 Flag{I_See_You}
 ```
