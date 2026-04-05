@@ -298,7 +298,6 @@ sudo less /etc/passwd
 
 ```
 FLAG{It_Is_Done.}
-
 ```
 Located at: `/root/root.txt`
 
